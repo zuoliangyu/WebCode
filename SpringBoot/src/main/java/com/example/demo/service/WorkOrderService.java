@@ -3,10 +3,10 @@ package com.example.demo.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.demo.entity.ProductBase;
+import com.example.demo.entity.Material;
 import com.example.demo.entity.User;
 import com.example.demo.entity.WorkOrder;
-import com.example.demo.mapper.ProductBaseMapper;
+import com.example.demo.mapper.MaterialMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.mapper.WorkOrderMapper;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Date;
 
-
 @Service
 public class WorkOrderService {
 
@@ -23,7 +22,7 @@ public class WorkOrderService {
     private WorkOrderMapper workOrderMapper;
 
     @Resource
-    private ProductBaseMapper productBaseMapper;
+    private MaterialMapper materialMapper;
 
     @Resource
     private UserMapper userMapper;
@@ -32,40 +31,98 @@ public class WorkOrderService {
     private OperationLogService operationLogService;
 
     /**
-     * 创建工单
+     * 创建出库工单
      */
     @Transactional
     public WorkOrder createWorkOrder(WorkOrder workOrder, User currentUser) {
-        // 生成唯一工单号
         String orderNumber = generateOrderNumber();
         workOrder.setOrderNumber(orderNumber);
-        workOrder.setStatus("待处理");
+        workOrder.setOrderType("出库");
+        workOrder.setStatus("待审批");
         workOrder.setCreateTime(new Date());
         workOrder.setUpdateTime(new Date());
-
-        // 设置申请人信息
         workOrder.setApplicantId(currentUser.getId());
         workOrder.setApplicantName(currentUser.getNickName());
+        workOrder.setEmployeeId(currentUser.getEmployeeId());
 
-        // 设置物品信息
-        ProductBase product = productBaseMapper.selectById(workOrder.getProductId());
-        if (product != null) {
-            workOrder.setProductName(product.getName());
+        // 获取物料信息，快照单套用量
+        Material material = materialMapper.selectById(workOrder.getProductId());
+        if (material != null) {
+            workOrder.setProductName(material.getName());
+            workOrder.setPerSetQuantity(material.getPerSetQuantity());
+            // 自动计算数量 = 套数 x 单套用量
+            if (workOrder.getNumberOfSets() != null && material.getPerSetQuantity() != null) {
+                workOrder.setQuantity(workOrder.getNumberOfSets() * material.getPerSetQuantity());
+            }
         }
 
         workOrderMapper.insert(workOrder);
 
-        // 记录操作日志
-        operationLogService.recordOperation("创建工单",
-                "用户" + currentUser.getNickName() + "创建了工单：" + orderNumber,
+        operationLogService.recordOperation("创建出库工单",
+                "用户" + currentUser.getNickName() + "创建了出库工单：" + orderNumber,
                 currentUser, orderNumber);
 
         return workOrder;
     }
 
     /**
-     * 生成工单号：WO + 年月日 + 6位序号
+     * 创建退库工单
      */
+    @Transactional
+    public WorkOrder createReturnOrder(WorkOrder workOrder, User currentUser) {
+        // 校验关联的原出库工单
+        if (workOrder.getRelatedOrderNumber() == null || workOrder.getRelatedOrderNumber().isEmpty()) {
+            throw new RuntimeException("退库工单必须关联原出库工单号");
+        }
+
+        // 查找原出库工单
+        LambdaQueryWrapper<WorkOrder> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(WorkOrder::getOrderNumber, workOrder.getRelatedOrderNumber());
+        WorkOrder originalOrder = workOrderMapper.selectOne(wrapper);
+        if (originalOrder == null) {
+            throw new RuntimeException("关联的原出库工单不存在");
+        }
+        if (!"已通过".equals(originalOrder.getStatus())) {
+            throw new RuntimeException("关联的原出库工单状态不是已通过");
+        }
+
+        // 校验退库数量
+        if (workOrder.getQuantity() == null || workOrder.getQuantity() <= 0) {
+            throw new RuntimeException("退库数量必须大于0");
+        }
+        int originalQty = originalOrder.getActualDeliveryQuantity() != null ?
+                originalOrder.getActualDeliveryQuantity() : originalOrder.getQuantity();
+        if (workOrder.getQuantity() > originalQty) {
+            throw new RuntimeException("退库数量不能超过原出库数量(" + originalQty + ")");
+        }
+
+        // 校验退库去向
+        if (workOrder.getReturnDestination() == null || workOrder.getReturnDestination().isEmpty()) {
+            throw new RuntimeException("退库去向不能为空");
+        }
+
+        String orderNumber = generateOrderNumber();
+        workOrder.setOrderNumber(orderNumber);
+        workOrder.setOrderType("退库");
+        workOrder.setStatus("待审批");
+        workOrder.setCreateTime(new Date());
+        workOrder.setUpdateTime(new Date());
+        workOrder.setApplicantId(currentUser.getId());
+        workOrder.setApplicantName(currentUser.getNickName());
+        workOrder.setEmployeeId(currentUser.getEmployeeId());
+        workOrder.setProductId(originalOrder.getProductId());
+        workOrder.setProductName(originalOrder.getProductName());
+        workOrder.setDrawingNumber(originalOrder.getDrawingNumber());
+
+        workOrderMapper.insert(workOrder);
+
+        operationLogService.recordOperation("创建退库工单",
+                "用户" + currentUser.getNickName() + "创建了退库工单：" + orderNumber,
+                currentUser, orderNumber);
+
+        return workOrder;
+    }
+
     private String generateOrderNumber() {
         String dateStr = java.time.LocalDate.now().toString().replace("-", "");
         String prefix = "WO" + dateStr;
@@ -73,6 +130,7 @@ public class WorkOrderService {
         LambdaQueryWrapper<WorkOrder> wrapper = Wrappers.lambdaQuery();
         wrapper.likeRight(WorkOrder::getOrderNumber, prefix);
         wrapper.orderByDesc(WorkOrder::getOrderNumber);
+        wrapper.last("LIMIT 1");
 
         WorkOrder lastOrder = workOrderMapper.selectOne(wrapper);
         int sequence = 1;
@@ -86,96 +144,99 @@ public class WorkOrderService {
     }
 
     /**
-     * 管理员审批工单 - 同意配送
+     * 审批通过：出库扣库存，退库加库存
      */
     @Transactional
-    public boolean approveAndDeliver(WorkOrder workOrder, Integer actualQuantity, String deliveryPerson, User adminUser) {
-        WorkOrder existingOrder = workOrderMapper.selectById(workOrder.getId());
-        if (existingOrder == null || !"待处理".equals(existingOrder.getStatus())) {
+    public boolean approveAndDeliver(Integer orderId, Integer actualQuantity, User adminUser) {
+        WorkOrder existingOrder = workOrderMapper.selectById(orderId);
+        if (existingOrder == null || !"待审批".equals(existingOrder.getStatus())) {
             return false;
         }
 
-        // 更新工单状态
-        existingOrder.setStatus("已完成");
-        existingOrder.setActualDeliveryQuantity(actualQuantity);
-        existingOrder.setDeliveryPerson(deliveryPerson);
+        int qty = actualQuantity != null ? actualQuantity : existingOrder.getQuantity();
+
+        existingOrder.setStatus("已通过");
+        existingOrder.setActualDeliveryQuantity(qty);
+        existingOrder.setApproverId(adminUser.getId());
+        existingOrder.setApproverName(adminUser.getNickName());
         existingOrder.setCompleteTime(new Date());
         existingOrder.setUpdateTime(new Date());
 
         workOrderMapper.updateById(existingOrder);
 
-        // 减少库存
-        ProductBase product = productBaseMapper.selectById(existingOrder.getProductId());
-        if (product != null && product.getStockQuantity() >= actualQuantity) {
-            product.setStockQuantity(product.getStockQuantity() - actualQuantity);
-            productBaseMapper.updateById(product);
+        // 更新库存
+        Material material = materialMapper.selectById(existingOrder.getProductId());
+        if (material != null) {
+            if ("出库".equals(existingOrder.getOrderType())) {
+                // 出库减库存
+                int newStock = material.getTotalQuantity() - qty;
+                material.setTotalQuantity(Math.max(newStock, 0));
+            } else if ("退库".equals(existingOrder.getOrderType())) {
+                // 退库加库存
+                material.setTotalQuantity(material.getTotalQuantity() + qty);
+            }
+            material.setUpdateTime(new Date());
+            materialMapper.updateById(material);
         }
 
-        // 记录操作日志
         operationLogService.recordOperation("审批工单",
-                "管理员" + adminUser.getNickName() + "同意了工单：" + existingOrder.getOrderNumber() +
-                        "，实际配送数量：" + actualQuantity,
+                adminUser.getNickName() + "通过了工单：" + existingOrder.getOrderNumber() +
+                        "，实际数量：" + qty,
                 adminUser, existingOrder.getOrderNumber());
 
         return true;
     }
 
-    /**
-     * 管理员拒绝工单
-     */
     @Transactional
     public boolean rejectWorkOrder(Integer orderId, String rejectReason, User adminUser) {
         WorkOrder existingOrder = workOrderMapper.selectById(orderId);
-        if (existingOrder == null || !"待处理".equals(existingOrder.getStatus())) {
+        if (existingOrder == null || !"待审批".equals(existingOrder.getStatus())) {
             return false;
         }
 
         existingOrder.setStatus("已拒绝");
         existingOrder.setRejectReason(rejectReason);
+        existingOrder.setApproverId(adminUser.getId());
+        existingOrder.setApproverName(adminUser.getNickName());
         existingOrder.setUpdateTime(new Date());
 
         workOrderMapper.updateById(existingOrder);
 
-        // 记录操作日志
         operationLogService.recordOperation("拒绝工单",
-                "管理员" + adminUser.getNickName() + "拒绝了工单：" + existingOrder.getOrderNumber() +
-                        "，拒绝理由：" + rejectReason,
+                adminUser.getNickName() + "拒绝了工单：" + existingOrder.getOrderNumber() +
+                        "，原因：" + rejectReason,
                 adminUser, existingOrder.getOrderNumber());
 
         return true;
     }
 
-    /**
-     * 根据申请人ID查询工单
-     */
-    public Page<WorkOrder> getWorkOrdersByApplicant(Integer applicantId, Integer pageNum, Integer pageSize) {
+    public Page<WorkOrder> getWorkOrdersByApplicant(Integer applicantId, Integer pageNum, Integer pageSize,
+                                                     String status, String orderType) {
         LambdaQueryWrapper<WorkOrder> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(WorkOrder::getApplicantId, applicantId);
+        if (status != null && !status.isEmpty()) {
+            wrapper.eq(WorkOrder::getStatus, status);
+        }
+        if (orderType != null && !orderType.isEmpty()) {
+            wrapper.eq(WorkOrder::getOrderType, orderType);
+        }
         wrapper.orderByDesc(WorkOrder::getCreateTime);
         return workOrderMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
     }
 
-    /**
-     * 管理员查询所有工单
-     */
-    public Page<WorkOrder> getAllWorkOrders(Integer pageNum, Integer pageSize, String status, String applicantName) {
+    public Page<WorkOrder> getAllWorkOrders(Integer pageNum, Integer pageSize, String status,
+                                            String orderType, String applicantName) {
         LambdaQueryWrapper<WorkOrder> wrapper = Wrappers.lambdaQuery();
         if (status != null && !status.isEmpty()) {
             wrapper.eq(WorkOrder::getStatus, status);
+        }
+        if (orderType != null && !orderType.isEmpty()) {
+            wrapper.eq(WorkOrder::getOrderType, orderType);
         }
         if (applicantName != null && !applicantName.isEmpty()) {
             wrapper.like(WorkOrder::getApplicantName, applicantName);
         }
         wrapper.orderByDesc(WorkOrder::getCreateTime);
         return workOrderMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
-    }
-
-    /**
-     * 根据工单号查询工单
-     */
-    public WorkOrder getWorkOrderByNumber(String orderNumber) {
-        LambdaQueryWrapper<WorkOrder> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(WorkOrder::getOrderNumber, orderNumber);
-        return workOrderMapper.selectOne(wrapper);
     }
 }

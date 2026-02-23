@@ -1,154 +1,120 @@
 /*
- Navicat Premium Data Transfer
-
- Source Server         : 本地
- Source Server Type    : MySQL
- Source Server Version : 80030
- Source Host           : localhost:3306
- Source Schema         : springboot-vue
-
- Target Server Type    : MySQL
- Target Server Version : 80030
- File Encoding         : 65001
-
- Date: 17/01/2023 20:08:06
+ 总成车间物料管理系统 - 数据库初始化脚本
+ Database: dbforproductmanager
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for book
--- ----------------------------
-DROP TABLE IF EXISTS `book`;
-CREATE TABLE `book`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'id',
-  `isbn` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '图书编号',
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '名称',
-  `price` decimal(10, 2) NULL DEFAULT NULL COMMENT '价格',
-  `author` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '作者',
-  `publisher` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '出版社',
-  `create_time` date NULL DEFAULT NULL COMMENT '出版时间',
-  `status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '1' COMMENT '0：未归还 1：已归还',
-  `borrownum` int NOT NULL DEFAULT 0 COMMENT '此书被借阅次数',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 27 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of book
--- ----------------------------
-INSERT INTO `book` VALUES (9, '20211880115', '十万个为什么', 15.00, '苏格与', '温州大学出版社', '2022-12-05', '0', 18);
-INSERT INTO `book` VALUES (10, '20211880119', '五万个为什么', 20.00, '聂家辉', '温州大学出版社', '2022-12-01', '0', 19);
-INSERT INTO `book` VALUES (11, '20211880106', '一万个为什么', 16.00, '丁奕中', '温州大学出版社', '2022-12-02', '1', 13);
-INSERT INTO `book` VALUES (12, '20211880114', '计算机操作系统', 32.00, '凌浩晨', '温州大学出版社', '2022-12-03', '1', 4);
-INSERT INTO `book` VALUES (13, '20211880118', '伊索寓言', 25.00, '沈益威', '温州大学出版社', '2022-12-04', '1', 12);
-INSERT INTO `book` VALUES (15, '20211880109', '格林童话', 20.00, '张超祥', '温州大学出版社', '2022-12-05', '1', 3);
-INSERT INTO `book` VALUES (16, '20211880100', '图书管理系统', 188.00, '聂家辉', '温州大学出版社', '2022-08-10', '0', 16);
-INSERT INTO `book` VALUES (17, '20211880128', '和另一个自己谈谈心', 12.00, '\r\n武志红', '中国友谊出版公司', '2021-01-01', '1', 12);
-INSERT INTO `book` VALUES (18, '20211880111', '全国计算机技术与软件专业技术资格(水平)考试. 系统分析师考试大纲', 12.00, '全国计算机技术与软件专业技术资格(水平)考试办公室', '清华大学出版社', '2004-05-22', '1', 1);
-INSERT INTO `book` VALUES (19, '20211880145', '简单减肥餐, 好吃不反弹', 20.00, '\r\n萨巴蒂娜', '中国轻工业出版社', '2022-07-07', '1', 1);
-INSERT INTO `book` VALUES (20, '20211880155', '其实她真的好喜欢你', 25.00, '\r\n莫妮打', '时代文艺出版社', '2022-02-02', '1', 0);
-INSERT INTO `book` VALUES (21, '20211880156', '导游业务. 第7版', 24.00, '\r\n全国导游人员资格考试教材编写组', '旅游教育出版社', '2022-08-22', '1', 0);
-INSERT INTO `book` VALUES (22, '20211880166', '法医秦明. 幸存者', 22.00, '\r\n法医秦明', '北京联合出版公司', '2022-02-22', '1', 0);
-INSERT INTO `book` VALUES (23, '20211880177', '中国书法史', 24.00, '\r\n徐建融', '浙江人民美术出版社', '2021-11-01', '1', 0);
-INSERT INTO `book` VALUES (24, '20211880199', '实用百草治百病', 22.00, '\r\n宋纬文', '福建科学技术出版社', '2021-09-22', '1', 0);
-INSERT INTO `book` VALUES (25, '20211880176', '烈火芳菲', 20.00, '赵方新', '北京十月文艺出版社', '2022-01-22', '1', 0);
-
--- ----------------------------
--- Table structure for bookwithuser
+-- 删除旧表
 -- ----------------------------
 DROP TABLE IF EXISTS `bookwithuser`;
-CREATE TABLE `bookwithuser`  (
-  `id` bigint NOT NULL COMMENT '读者id',
-  `isbn` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '图书编号',
-  `book_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '图书名',
-  `nick_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '读者姓名',
-  `lendtime` datetime NULL DEFAULT NULL COMMENT '借阅时间',
-  `deadtime` datetime NULL DEFAULT NULL COMMENT '应归还时间',
-  `prolong` int NULL DEFAULT NULL COMMENT '续借次数',
-  PRIMARY KEY (`book_name`) USING BTREE,
-  INDEX `id`(`id` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of bookwithuser
--- ----------------------------
-INSERT INTO `bookwithuser` VALUES (21, '20211880119', '五万个为什么', 'db', '2023-01-01 13:38:36', '2023-01-31 13:38:36', 1);
-INSERT INTO `bookwithuser` VALUES (28, '20211880115', '十万个为什么', '123', '2022-12-29 09:22:08', '2023-02-27 09:22:08', 0);
-INSERT INTO `bookwithuser` VALUES (27, '20211880100', '图书管理系统', '12', '2022-12-29 08:48:36', '2023-01-28 08:48:36', 2);
-
--- ----------------------------
--- Table structure for lend_record
--- ----------------------------
 DROP TABLE IF EXISTS `lend_record`;
-CREATE TABLE `lend_record`  (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `reader_id` bigint NOT NULL COMMENT '读者id',
-  `isbn` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '图书编号',
-  `bookname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '图书名',
-  `lend_time` datetime NULL DEFAULT NULL COMMENT '借书日期',
-  `return_time` datetime NULL DEFAULT NULL COMMENT '还书日期',
-  `status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '0：未归还 1：已归还',
-  `borrownum` int NOT NULL COMMENT '此书被借阅次数',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2030043138 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of lend_record
--- ----------------------------
-INSERT INTO `lend_record` VALUES (-2048151551, 21, '20211880119', '五万个为什么', '2023-01-01 13:38:36', NULL, '0', 19);
-INSERT INTO `lend_record` VALUES (-1859469311, 21, '20211880114', '计算机操作系统', '2022-12-26 17:31:05', '2023-01-01 13:38:22', '1', 4);
-INSERT INTO `lend_record` VALUES (-1851039742, 21, '20211880100', '图书管理系统', '2022-12-23 19:30:59', '2022-12-23 19:32:00', '1', 13);
-INSERT INTO `lend_record` VALUES (-1691627519, 27, '20211880100', '图书管理系统', '2022-12-29 08:48:36', NULL, '0', 16);
-INSERT INTO `lend_record` VALUES (-1230368766, 21, '20211880115', '十万个为什么', '2022-12-24 15:10:31', '2022-12-24 15:17:51', '1', 13);
-INSERT INTO `lend_record` VALUES (-1171603454, 21, '20211880106', '一万个为什么', '2021-12-26 17:31:01', '2022-12-31 15:58:52', '1', 12);
-INSERT INTO `lend_record` VALUES (-1007984639, 21, '20211880115', '十万个为什么', '2022-12-23 19:34:28', '2022-12-23 19:34:33', '1', 12);
-INSERT INTO `lend_record` VALUES (-785686526, 21, '20211880115', '十万个为什么', '2022-12-23 19:31:28', '2022-12-23 19:32:05', '1', 11);
-INSERT INTO `lend_record` VALUES (-705966078, 28, '20211880115', '十万个为什么', '2022-12-29 09:22:08', NULL, '0', 18);
-INSERT INTO `lend_record` VALUES (-693452798, 21, '20211880100', '图书管理系统', '2022-12-26 17:31:07', '2022-12-27 13:16:54', '1', 15);
-INSERT INTO `lend_record` VALUES (-630497279, 21, '20211880109', '格林童话', '2022-12-23 19:31:31', '2022-12-23 19:32:10', '1', 2);
-INSERT INTO `lend_record` VALUES (-483696639, 21, '20211880118', '伊索寓言', '2022-12-23 19:31:29', '2022-12-23 19:32:11', '1', 9);
-INSERT INTO `lend_record` VALUES (-391421951, 21, '20211880128', '和另一个自己谈谈心', '2022-12-23 19:35:41', '2022-12-23 19:35:46', '1', 11);
-INSERT INTO `lend_record` VALUES (-177598462, 21, '20211880115', '十万个为什么', '2022-12-24 15:23:24', '2022-12-24 15:23:33', '1', 15);
-INSERT INTO `lend_record` VALUES (-18128895, 21, '20211880111', '全国计算机技术与软件专业技术资格(水平)考试. 系统分析师考试大纲', '2022-12-23 19:31:35', '2022-12-23 19:32:15', '1', 1);
-INSERT INTO `lend_record` VALUES (19632129, 21, '20211880106', '一万个为什么', '2022-12-31 16:05:24', '2023-01-01 13:38:29', '1', 13);
-INSERT INTO `lend_record` VALUES (262901761, 21, '20211880109', '格林童话', '2022-12-31 15:58:56', '2023-01-01 13:38:24', '1', 3);
-INSERT INTO `lend_record` VALUES (611016705, 21, '20211880119', '五万个为什么', '2022-12-23 19:31:28', '2022-12-23 19:31:57', '1', 18);
-INSERT INTO `lend_record` VALUES (749342722, 21, '20211880115', '十万个为什么', '2022-12-24 15:26:33', '2022-12-24 15:29:49', '1', 16);
-INSERT INTO `lend_record` VALUES (761970690, 21, '20211880118', '伊索寓言', '2022-12-26 17:31:02', '2023-01-01 13:38:28', '1', 12);
-INSERT INTO `lend_record` VALUES (1001086978, 21, '20211880118', '伊索寓言', '2022-12-23 19:33:59', '2022-12-23 19:34:02', '1', 10);
-INSERT INTO `lend_record` VALUES (1017778177, 21, '20211880115', '十万个为什么', '2022-12-24 15:19:35', '2022-12-24 15:19:50', '1', 14);
-INSERT INTO `lend_record` VALUES (1172967426, 21, '20211880100', '图书管理系统', '2022-12-24 15:28:35', '2022-12-24 15:30:12', '1', 14);
-INSERT INTO `lend_record` VALUES (1181442050, 21, '20211880106', '一万个为什么', '2022-12-23 19:31:29', '2022-12-23 19:32:06', '1', 11);
-INSERT INTO `lend_record` VALUES (1290493954, 21, '20211880118', '伊索寓言', '2022-12-23 19:35:39', '2022-12-23 19:35:44', '1', 11);
-INSERT INTO `lend_record` VALUES (1412087809, 21, '20211880128', '和另一个自己谈谈心', '2022-12-26 17:31:04', '2023-01-01 13:38:26', '1', 12);
-INSERT INTO `lend_record` VALUES (1428905986, 21, '20211880114', '计算机操作系统', '2022-12-23 19:31:30', '2022-12-23 19:32:08', '1', 3);
-INSERT INTO `lend_record` VALUES (1659592705, 21, '20211880119', '五万个为什么', '2022-12-23 19:30:59', '2022-12-23 19:31:18', '1', 17);
-INSERT INTO `lend_record` VALUES (1735090177, 21, '20211880118', '和另一个自己谈谈心', '2022-12-23 19:33:57', '2022-12-23 19:34:03', '1', 2);
-INSERT INTO `lend_record` VALUES (1756061697, 21, '20211880118', '和另一个自己谈谈心', '2022-12-23 19:31:33', '2022-12-23 19:32:13', '1', 1);
+DROP TABLE IF EXISTS `book`;
+DROP TABLE IF EXISTS `product_base`;
 
 -- ----------------------------
 -- Table structure for user
 -- ----------------------------
 DROP TABLE IF EXISTS `user`;
-CREATE TABLE `user`  (
+CREATE TABLE `user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户名',
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '密码',
   `nick_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '姓名',
+  `employee_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '工号',
   `phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '电话号码',
   `sex` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '性别',
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '地址',
-  `role` int NOT NULL COMMENT '角色、1：管理员 2：普通用户',
-  `alow` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '是否允许借阅',
+  `role` int NOT NULL COMMENT '角色: 1=系统管理员, 2=仓库管理员, 3=员工',
+  `alow` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '1' COMMENT '账号状态: 1=正常, 0=禁用',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户信息表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户信息表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'njh', '123', '聂家辉', '17326788058', '男', '温州大学南校区A12-417室', 1, '1');
-INSERT INTO `user` VALUES (21, 'db', '123', '借阅者', '17326788058', '男', '温州大学计算机与人工智能学院', 2, '1');
-INSERT INTO `user` VALUES (28, '123', '123', 'njh', '19802045416', '男', 'xxx', 2, '1');
+INSERT INTO `user` VALUES (1, 'admin', '123456', '系统管理员', 'EMP001', '13800000001', '男', '总成车间', 1, '1');
+INSERT INTO `user` VALUES (2, 'warehouse', '123456', '仓库管理员', 'EMP002', '13800000002', '男', '总成车间仓库', 2, '1');
+INSERT INTO `user` VALUES (3, 'worker', '123456', '张三', 'EMP003', '13800000003', '男', '总成车间A区', 3, '1');
+
+-- ----------------------------
+-- Table structure for material
+-- ----------------------------
+DROP TABLE IF EXISTS `material`;
+CREATE TABLE `material` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '物料名称',
+  `manufacturer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '厂家',
+  `category` int NULL DEFAULT NULL COMMENT '分类: 0=标件, 1=金工件, 2=元器件, 3=物资',
+  `per_set_quantity` int NULL DEFAULT 0 COMMENT '单套用量',
+  `total_quantity` int NULL DEFAULT 0 COMMENT '总数量',
+  `stock_alert_threshold` int NULL DEFAULT 10 COMMENT '库存预警阈值',
+  `expiry_date` date NULL DEFAULT NULL COMMENT '有效期',
+  `drawing_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '图号',
+  `specification` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '规格型号',
+  `unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '个' COMMENT '单位',
+  `storage_location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '存放位置',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '物料信息表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of material (示例数据)
+-- ----------------------------
+INSERT INTO `material` VALUES (1, 'M6x20螺栓', '标准件厂', 0, 10, 500, 50, '2026-12-31', 'BJ-001', 'M6x20 8.8级', '个', 'A区-01-01', '常用标件', NOW(), NOW());
+INSERT INTO `material` VALUES (2, '铝合金支架', '金工车间', 1, 2, 100, 10, '2027-06-30', 'JG-001', '200x100x50mm', '件', 'B区-02-01', '定制金工件', NOW(), NOW());
+INSERT INTO `material` VALUES (3, '电阻10K', '村田', 2, 20, 2000, 200, '2026-06-15', 'YQ-001', '0603 10KΩ', '个', 'C区-01-01', 'SMD贴片电阻', NOW(), NOW());
+INSERT INTO `material` VALUES (4, '劳保手套', '安全用品公司', 3, 1, 200, 20, '2026-04-01', NULL, 'XL码', '双', 'D区-01-01', '日常物资', NOW(), NOW());
+INSERT INTO `material` VALUES (5, '密封垫片', '密封件厂', 0, 5, 30, 50, '2026-03-10', 'BJ-002', 'DN50 橡胶', '片', 'A区-01-02', '即将过期物料', NOW(), NOW());
+
+-- ----------------------------
+-- Table structure for work_order
+-- ----------------------------
+DROP TABLE IF EXISTS `work_order`;
+CREATE TABLE `work_order` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `order_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '工单号',
+  `order_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '出库' COMMENT '工单类型: 出库/退库',
+  `applicant_id` bigint NULL DEFAULT NULL COMMENT '申请人ID',
+  `applicant_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '申请人姓名',
+  `employee_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '工号',
+  `product_id` bigint NULL DEFAULT NULL COMMENT '物料ID',
+  `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '物料名称',
+  `drawing_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '图号',
+  `number_of_sets` int NULL DEFAULT 1 COMMENT '套数',
+  `per_set_quantity` int NULL DEFAULT 0 COMMENT '单套用量快照',
+  `quantity` int NULL DEFAULT NULL COMMENT '申请数量(套数x单套用量)',
+  `purpose` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用途说明',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '待审批' COMMENT '状态: 待审批/已通过/已拒绝',
+  `reject_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '拒绝理由',
+  `actual_delivery_quantity` int NULL DEFAULT NULL COMMENT '实际出库/退库数量',
+  `return_destination` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '退库去向',
+  `related_order_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '关联原工单号(退库时)',
+  `approver_id` bigint NULL DEFAULT NULL COMMENT '审批人ID',
+  `approver_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '审批人姓名',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `complete_time` datetime NULL DEFAULT NULL COMMENT '完成时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '工单表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for operation_log
+-- ----------------------------
+DROP TABLE IF EXISTS `operation_log`;
+CREATE TABLE `operation_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `operation_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '操作类型',
+  `description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '操作描述',
+  `operator_id` bigint NULL DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '操作人姓名',
+  `order_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '关联工单号',
+  `operate_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '操作日志表' ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;

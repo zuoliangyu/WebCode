@@ -1,25 +1,24 @@
 package com.example.demo.controller;
 
-import cn.hutool.core.util.RandomUtil;
+import cn.hutool.poi.excel.ExcelReader;
+import cn.hutool.poi.excel.ExcelUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.demo.LoginUser;
 import com.example.demo.commom.Result;
 import com.example.demo.entity.User;
 import com.example.demo.mapper.UserMapper;
-import com.example.demo.utils.RegexUtils;
-import com.example.demo.utils.SmsUtils;
 import com.example.demo.utils.TokenUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -27,164 +26,180 @@ public class UserController {
     @Resource
     UserMapper userMapper;
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-
-    @GetMapping("/getcode")
-    public Result<?> getcode(@RequestParam String phone){
-
-        //校验手机号
-        if (RegexUtils.isPhoneInvalid(phone)) {
-            return Result.error("-1","手机号错误");
-        }
-
-        String code = RandomUtil.randomNumbers(6);  //六位随机验证码
-
-        stringRedisTemplate.opsForValue().set(phone,code,5L, TimeUnit.MINUTES);  //将验证码存入redis，5分钟有效
-        SmsUtils.sendSms(phone,code);   //发送验证码,初次启动会报错因为没有此类方法,请到阿里云配置属于自己的短信密钥
-        System.out.println(code);
-        return Result.success();
-    }
-
     @PostMapping("/register")
-    public Result<?> register(@RequestBody User user){
-        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername,user.getUsername()));
-        if(res != null)
-        {
-            return Result.error("-1","用户名已重复");
+    public Result<?> register(@RequestBody User user) {
+        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, user.getUsername()));
+        if (res != null) {
+            return Result.error("-1", "用户名已重复");
         }
+        if (user.getRole() == null) {
+            user.setRole(3); // 默认为员工
+        }
+        user.setAlow("1"); // 默认正常状态
         userMapper.insert(user);
         return Result.success();
     }
+
     @CrossOrigin
     @PostMapping("/login")
-    public Result<?> login(@RequestBody User user){
-        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername,user.getUsername()).eq(User::getPassword,user.getPassword()));
-        if(res == null)
-        {
-            return Result.error("-1","用户名或密码错误");
+    public Result<?> login(@RequestBody User user) {
+        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery()
+                .eq(User::getUsername, user.getUsername())
+                .eq(User::getPassword, user.getPassword()));
+        if (res == null) {
+            return Result.error("-1", "用户名或密码错误");
+        }
+        if ("0".equals(res.getAlow())) {
+            return Result.error("-1", "账号已被禁用，请联系管理员");
         }
         String token = TokenUtils.genToken(res);
         res.setToken(token);
-        LoginUser.addVisitCount();
         return Result.success(res);
     }
+
     @PostMapping
-    public Result<?> save(@RequestBody User user){
-        if(user.getPassword() == null){
+    public Result<?> save(@RequestBody User user) {
+        if (user.getPassword() == null) {
             user.setPassword("123456");
+        }
+        if (user.getAlow() == null) {
+            user.setAlow("1");
         }
         userMapper.insert(user);
         return Result.success();
     }
+
     @PutMapping("/password")
-    public  Result<?> update( @RequestParam Integer id,
-                              @RequestParam String password2){
+    public Result<?> updatePassword(@RequestParam Integer id,
+                                    @RequestParam String oldPassword,
+                                    @RequestParam String newPassword) {
+        User user = userMapper.selectById(id);
+        if (user == null) {
+            return Result.error("-1", "用户不存在");
+        }
+        if (!user.getPassword().equals(oldPassword)) {
+            return Result.error("-1", "旧密码错误");
+        }
         UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("id",id);
-        User user = new User();
-        user.setPassword(password2);
-        userMapper.update(user,updateWrapper);
+        updateWrapper.eq("id", id);
+        User updateUser = new User();
+        updateUser.setPassword(newPassword);
+        userMapper.update(updateUser, updateWrapper);
         return Result.success();
-    }
-    @PutMapping
-    public  Result<?> password(@RequestBody User user){
-
-        String code = stringRedisTemplate.opsForValue().get(user.getPhone());  //从redis中取出验证码
-        if (code==null){
-            return Result.error("-1","请先获取验证码");
-        }
-
-        if (user.getCode().equals(code)){
-            userMapper.updateById(user);
-            stringRedisTemplate.delete(user.getPhone());
-            return Result.success();
-        }
-        return Result.error("-1","验证码错误");
     }
 
     @PutMapping("/update")
-    public Result<?> update(@RequestBody User user){
-        //校验手机号
-        if (RegexUtils.isPhoneInvalid(user.getPhone())) {
-            return Result.error("-1","手机号格式错误");
-        }
+    public Result<?> update(@RequestBody User user) {
         userMapper.updateById(user);
         return Result.success();
     }
 
     @PostMapping("/deleteBatch")
-    public  Result<?> deleteBatch(@RequestBody List<Integer> ids){
+    public Result<?> deleteBatch(@RequestBody List<Integer> ids) {
         userMapper.deleteBatchIds(ids);
         return Result.success();
     }
+
     @DeleteMapping("/{id}")
-    public Result<?> delete(@PathVariable Long id){
+    public Result<?> delete(@PathVariable Long id) {
         userMapper.deleteById(id);
         return Result.success();
     }
 
-    @PutMapping("/{id}")
-    public Result<?> update(@PathVariable Long id){
+    // 切换账号状态（正常/禁用）
+    @PutMapping("/toggle/{id}")
+    public Result<?> toggleStatus(@PathVariable Long id) {
         User user = userMapper.selectById(id);
-        if (user == null){
-            return Result.error("-1","授权失败,用户信息错误");
+        if (user == null) {
+            return Result.error("-1", "用户不存在");
         }
-        if(user.getAlow() == null){
-            user.setAlow("1");
-            userMapper.updateById(user);
-            return Result.success();
-        }
-        if (user.getAlow().equals("1")){
-            return Result.error("-1","该用户已有借阅权限");
-        }
-        return Result.error("-1","服务器错误");
+        user.setAlow("1".equals(user.getAlow()) ? "0" : "1");
+        userMapper.updateById(user);
+        return Result.success();
     }
+
+    // 管理员重置用户密码
+    @PutMapping("/resetPassword/{id}")
+    public Result<?> resetPassword(@PathVariable Long id) {
+        User user = userMapper.selectById(id);
+        if (user == null) {
+            return Result.error("-1", "用户不存在");
+        }
+        user.setPassword("123456");
+        userMapper.updateById(user);
+        return Result.success();
+    }
+
     @GetMapping
     public Result<?> findPage(@RequestParam(defaultValue = "1") Integer pageNum,
                               @RequestParam(defaultValue = "10") Integer pageSize,
-                              @RequestParam(defaultValue = "") String search){
+                              @RequestParam(defaultValue = "") String search) {
         LambdaQueryWrapper<User> wrappers = Wrappers.lambdaQuery();
-        if(StringUtils.isNotBlank(search)){
-            wrappers.like(User::getNickName,search);
+        if (StringUtils.isNotBlank(search)) {
+            wrappers.and(w -> w.like(User::getNickName, search)
+                    .or().like(User::getUsername, search)
+                    .or().like(User::getEmployeeId, search));
         }
-        wrappers.like(User::getRole,2);
-        Page<User> userPage =userMapper.selectPage(new Page<>(pageNum,pageSize), wrappers);
+        // 查询 role=2,3 的用户
+        wrappers.in(User::getRole, 2, 3);
+        wrappers.orderByAsc(User::getId);
+        Page<User> userPage = userMapper.selectPage(new Page<>(pageNum, pageSize), wrappers);
         return Result.success(userPage);
     }
-    @GetMapping("/usersearch")
-    public Result<?> findPage2(@RequestParam(defaultValue = "1") Integer pageNum,
-                              @RequestParam(defaultValue = "10") Integer pageSize,
-                              @RequestParam(defaultValue = "") String search1,
-                               @RequestParam(defaultValue = "") String search2,
-                               @RequestParam(defaultValue = "") String search3,
-                               @RequestParam(defaultValue = "") String search4){
-        LambdaQueryWrapper<User> wrappers = Wrappers.lambdaQuery();
-        if(StringUtils.isNotBlank(search1)){
-            wrappers.like(User::getId,search1);
+
+    // xlsx 批量导入用户
+    @PostMapping("/import")
+    public Result<?> importUsers(@RequestParam("file") MultipartFile file) {
+        try {
+            InputStream inputStream = file.getInputStream();
+            ExcelReader reader = ExcelUtil.getReader(inputStream);
+            List<Map<String, Object>> readAll = reader.readAll();
+
+            int successCount = 0;
+            int skipCount = 0;
+
+            for (Map<String, Object> row : readAll) {
+                String username = row.get("用户名") != null ? row.get("用户名").toString().trim() : null;
+                String password = row.get("密码") != null ? row.get("密码").toString().trim() : "123456";
+                String nickName = row.get("姓名") != null ? row.get("姓名").toString().trim() : null;
+                String employeeId = row.get("工号") != null ? row.get("工号").toString().trim() : null;
+                String roleStr = row.get("角色") != null ? row.get("角色").toString().trim() : "员工";
+
+                if (username == null || username.isEmpty()) {
+                    skipCount++;
+                    continue;
+                }
+
+                // 检查用户名是否重复
+                User existing = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
+                if (existing != null) {
+                    skipCount++;
+                    continue;
+                }
+
+                User user = new User();
+                user.setUsername(username);
+                user.setPassword(password);
+                user.setNickName(nickName);
+                user.setEmployeeId(employeeId);
+                user.setAlow("1");
+
+                if ("仓库管理员".equals(roleStr)) {
+                    user.setRole(2);
+                } else {
+                    user.setRole(3);
+                }
+
+                userMapper.insert(user);
+                successCount++;
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("successCount", successCount);
+            result.put("skipCount", skipCount);
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error("-1", "导入失败: " + e.getMessage());
         }
-        if(StringUtils.isNotBlank(search2)){
-            wrappers.like(User::getNickName,search2);
-        }
-        if(StringUtils.isNotBlank(search3)){
-            wrappers.like(User::getPhone,search3);
-        }
-        if(StringUtils.isNotBlank(search4)){
-            wrappers.like(User::getAddress,search4);
-        }
-        wrappers.like(User::getRole,2);
-        wrappers.orderByAsc(User::getId);   //按编号排序
-        Page<User> userPage =userMapper.selectPage(new Page<>(pageNum,pageSize), wrappers);
-        return Result.success(userPage);
-    }
-    @GetMapping("/alow/{id}")
-    public Result<?> alow(@PathVariable Long id){
-        LambdaQueryWrapper<User> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(User::getId,id).eq(User::getAlow,"1");
-        User user = userMapper.selectOne(wrapper);
-        if (user == null){
-            return Result.error("-1","您没有管理员授予的借阅权!");
-        }
-        return Result.success();
     }
 }

@@ -1,99 +1,79 @@
 <template>
-  <div>
-    <el-card style="width: 40%; margin-left: 120px; margin-top: 40px" >
-        <h2 style="padding: 30px">个人信息</h2>
+  <div class="page-container">
+    <div class="card-container" style="max-width: 600px; margin: 20px auto">
+      <h3 style="margin-bottom: 20px; color: #303133">个人信息</h3>
       <el-form :model="form" ref="form" label-width="80px">
         <el-form-item label="用户名">
-          <el-input style="width: 80%" v-model="form.username" disabled></el-input>
+          <el-input v-model="form.username" disabled></el-input>
         </el-form-item>
         <el-form-item label="姓名">
-          <el-input style="width: 80%" v-model="form.nickName"></el-input>
+          <el-input v-model="form.nickName"></el-input>
         </el-form-item>
-        <el-form-item label="权限">
-            <span v-if="form.role==1" style="margin:5px">管理员</span>
-            <span v-if="form.role==2" style="margin:5px">读者</span>
+        <el-form-item label="工号">
+          <el-input v-model="form.employeeId" placeholder="请输入工号"></el-input>
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-tag :type="roleTagType">{{ roleName }}</el-tag>
         </el-form-item>
         <el-form-item label="电话号码">
-          <el-input style="width: 40%" v-model="form.phone"></el-input>
-          <el-tag type="danger" style="margin-left: 20px">如果修改了手机号请先重新登录再使用</el-tag>
+          <el-input v-model="form.phone" placeholder="请输入电话号码"></el-input>
         </el-form-item>
         <el-form-item label="性别">
-          <div>
-            <el-radio v-model="form.sex" label="男">男</el-radio>
-            <el-radio v-model="form.sex" label="女">女</el-radio>
-          </div>
+          <el-radio-group v-model="form.sex">
+            <el-radio label="男">男</el-radio>
+            <el-radio label="女">女</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="地址">
-          <el-input type="textarea" style="width: 80%" v-model="form.address"></el-input>
+          <el-input type="textarea" v-model="form.address" placeholder="请输入地址"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="update">保存</el-button>
         </el-form-item>
       </el-form>
-      <div style="text-align: center">
-        <el-button type="primary" @click="update">保存</el-button>
-      </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
 <script>
 import request from "@/utils/request";
-import {ElMessage} from "element-plus";
+import { ElMessage } from "element-plus";
 import router from "@/router";
 
 export default {
   name: "Person",
   data() {
-    return {
-      form: {}
-    }
+    return { form: {} };
+  },
+  computed: {
+    roleName() {
+      const map = { 1: "系统管理员", 2: "仓库管理员", 3: "员工" };
+      return map[this.form.role] || "未知";
+    },
+    roleTagType() {
+      const map = { 1: "danger", 2: "warning", 3: "" };
+      return map[this.form.role] || "info";
+    },
   },
   created() {
-    let userJson = sessionStorage.getItem("user")
-    if(!userJson)
-    {
-      router.push("/login")
+    let userJson = sessionStorage.getItem("user");
+    if (!userJson) {
+      router.push("/login");
+      return;
     }
-    let str = sessionStorage.getItem("user") || "{}"
-    this.form = JSON.parse(str)
+    this.form = JSON.parse(userJson);
   },
   methods: {
     update() {
-      request.put("/user/update", this.form).then(res => {
-        console.log(res)
-        if (res.code === '0') {
-          ElMessage.success("更新成功")
-          sessionStorage.setItem("user", JSON.stringify(this.form))
-          // 触发Layout更新用户信息
-          this.$emit("userInfo")
+      request.put("/user/update", this.form).then((res) => {
+        if (res.code === "0") {
+          ElMessage.success("更新成功");
+          sessionStorage.setItem("user", JSON.stringify(this.form));
         } else {
-          ElMessage.error(res.msg)
+          ElMessage.error(res.msg);
         }
-      })
-
-    }
-  }
-}
+      });
+    },
+  },
+};
 </script>
-
-<style>
-.avatar-uploader  {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.avatar-uploader:hover {
-  border-color: #409EFF;
-}
-
-.avatar {
-  width: 178px;
-  height: 178px;
-  display: block;
-}
-.box-card {
-  width: 60%;
-  margin: auto;
-  padding: 20px;
-}
-</style>

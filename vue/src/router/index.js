@@ -5,18 +5,43 @@ const routes = [
     {
         path: "/",
         name: "Layout",
-        redirect: "user",
+        redirect: "dashboard",
         component: Layout,
         children: [
             {
-                path: "user",
-                name: "user",
-                component: () => import("@/views/User"),
+                path: "dashboard",
+                name: "Dashboard",
+                component: () => import("@/views/Dashboard"),
             },
             {
-                path: "book",
-                name: "book",
-                component: () => import("@/views/Book"),
+                path: "material",
+                name: "Material",
+                component: () => import("@/views/Material"),
+            },
+            {
+                path: "outbound",
+                name: "OutboundRequest",
+                component: () => import("@/views/OutboundRequest"),
+            },
+            {
+                path: "return",
+                name: "ReturnRequest",
+                component: () => import("@/views/ReturnRequest"),
+            },
+            {
+                path: "order-approval",
+                name: "OrderApproval",
+                component: () => import("@/views/OrderApproval"),
+            },
+            {
+                path: "my-orders",
+                name: "MyOrders",
+                component: () => import("@/views/MyOrders"),
+            },
+            {
+                path: "user",
+                name: "User",
+                component: () => import("@/views/User"),
             },
             {
                 path: "person",
@@ -27,26 +52,6 @@ const routes = [
                 path: "password",
                 name: "Password",
                 component: () => import("@/views/Password"),
-            },
-            {
-                path: "lendrecord",
-                name: "LendRecord",
-                component: () => import("@/views/LendRecord"),
-            },
-            {
-                path: "dashboard",
-                name: "Dashboard",
-                component: () => import("@/views/Dashboard"),
-            },
-            {
-                path: "bookwithuser",
-                name: "BookWithUser",
-                component: () => import("@/views/BookWithUser"),
-            },
-            {
-                path: "workorder",
-                name: "WorkOrder",
-                component: () => import("@/views/WorkOrder"),
             },
         ],
     },

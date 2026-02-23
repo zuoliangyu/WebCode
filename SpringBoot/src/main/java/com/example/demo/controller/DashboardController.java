@@ -1,47 +1,96 @@
 package com.example.demo.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.demo.LoginUser;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.commom.Result;
-import com.example.demo.entity.Book;
-import com.example.demo.entity.LendRecord;
+import com.example.demo.entity.Material;
 import com.example.demo.entity.User;
-import com.example.demo.mapper.BookMapper;
-import com.example.demo.mapper.LendRecordMapper;
+import com.example.demo.entity.WorkOrder;
+import com.example.demo.mapper.MaterialMapper;
 import com.example.demo.mapper.UserMapper;
-
+import com.example.demo.mapper.WorkOrderMapper;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
     @Resource
     private UserMapper userMapper;
+
     @Resource
-    private LendRecordMapper lendRecordMapper;
+    private MaterialMapper materialMapper;
+
     @Resource
-    private BookMapper bookMapper;
+    private WorkOrderMapper workOrderMapper;
+
     @GetMapping
-    public  Result<?> dashboardrecords(){
-        int visitCount = LoginUser.getVisitCount();
-        QueryWrapper<User> queryWrapper1=new QueryWrapper<>();
-        int userCount = Math.toIntExact(userMapper.selectCount(queryWrapper1));
-        QueryWrapper<LendRecord> queryWrapper2=new QueryWrapper<LendRecord>();
-        int lendRecordCount = Math.toIntExact(lendRecordMapper.selectCount(queryWrapper2));
-        QueryWrapper<Book> queryWrapper3= new QueryWrapper<>();
-        int bookCount = Math.toIntExact(bookMapper.selectCount(queryWrapper3));
-        Map<String, Object> map = new HashMap<>();//键值对形式
-        map.put("visitCount", visitCount);//放置visitCount到map中
-        map.put("userCount", userCount);
-        map.put("lendRecordCount", lendRecordCount);
-        map.put("bookCount", bookCount);
+    public Result<?> dashboardData() {
+        Map<String, Object> map = new HashMap<>();
+
+        // 物料总数
+        long materialCount = materialMapper.selectCount(null);
+        map.put("materialCount", materialCount);
+
+        // 员工数（role=3）
+        LambdaQueryWrapper<User> empWrapper = Wrappers.lambdaQuery();
+        empWrapper.eq(User::getRole, 3);
+        long employeeCount = userMapper.selectCount(empWrapper);
+        map.put("employeeCount", employeeCount);
+
+        // 待审批工单数
+        LambdaQueryWrapper<WorkOrder> pendingWrapper = Wrappers.lambdaQuery();
+        pendingWrapper.eq(WorkOrder::getStatus, "待审批");
+        long pendingCount = workOrderMapper.selectCount(pendingWrapper);
+        map.put("pendingCount", pendingCount);
+
+        // 总工单数
+        long totalOrderCount = workOrderMapper.selectCount(null);
+        map.put("totalOrderCount", totalOrderCount);
+
+        // 库存预警数
+        List<Material> allMaterials = materialMapper.selectList(null);
+        long lowStockCount = allMaterials.stream()
+                .filter(m -> m.getStockAlertThreshold() != null && m.getTotalQuantity() != null
+                        && m.getTotalQuantity() <= m.getStockAlertThreshold())
+                .count();
+        map.put("lowStockCount", lowStockCount);
+
+        // 即将过期物料数（30天内）
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 30);
+        Date thirtyDaysLater = cal.getTime();
+        LambdaQueryWrapper<Material> expiringWrapper = Wrappers.lambdaQuery();
+        expiringWrapper.le(Material::getExpiryDate, thirtyDaysLater);
+        long expiringCount = materialMapper.selectCount(expiringWrapper);
+        map.put("expiringCount", expiringCount);
+
+        // 各分类物料数量（供柱状图）
+        int[] categoryCount = new int[4];
+        for (Material m : allMaterials) {
+            if (m.getCategory() != null && m.getCategory() >= 0 && m.getCategory() <= 3) {
+                categoryCount[m.getCategory()]++;
+            }
+        }
+        map.put("categoryCounts", categoryCount);
+
         return Result.success(map);
     }
 
+    // 获取过期预警物料列表
+    @GetMapping("/expiring-materials")
+    public Result<?> getExpiringMaterials() {
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 30);
+        Date thirtyDaysLater = cal.getTime();
 
-
+        LambdaQueryWrapper<Material> wrapper = Wrappers.lambdaQuery();
+        wrapper.le(Material::getExpiryDate, thirtyDaysLater);
+        wrapper.orderByAsc(Material::getExpiryDate);
+        List<Material> list = materialMapper.selectList(wrapper);
+        return Result.success(list);
+    }
 }

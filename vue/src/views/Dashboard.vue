@@ -1,174 +1,189 @@
 <template>
-  <div>
-    <el-row :gutter="20">
-      <el-col :span="6" v-for="item in cards" :key="item.title">
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">{{ item.title }}</div>
-          <div class="text item">
-            <svg class="icon" aria-hidden="true">
-              <use :xlink:href="item.icon" style="width: 100px"></use>
-            </svg>
-            <span class="text">{{ item.data }}</span>
-          </div>
-        </el-card>
+  <div class="page-container">
+    <!-- 统计卡片 -->
+    <el-row :gutter="16" style="margin-bottom: 20px">
+      <el-col :span="4" v-for="(item, index) in statCards" :key="index">
+        <div class="stat-card">
+          <div class="stat-number" :style="{ color: item.color }">{{ item.value }}</div>
+          <div class="stat-label">{{ item.label }}</div>
+        </div>
       </el-col>
     </el-row>
-    <div id="myTimer" style="margin-left: 15px;font-weight: 550;"></div>
-    <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
-    <div id="main" style="margin-left: 5px"></div>
+
+    <!-- 有效期预警区域 -->
+    <div class="card-container" v-if="expiringMaterials.length > 0">
+      <h4 style="margin-bottom: 16px; color: #303133">
+        <el-icon style="color: #E6A23C; vertical-align: middle"><WarningFilled /></el-icon>
+        有效期预警
+      </h4>
+      <el-row :gutter="12">
+        <el-col :span="6" v-for="item in expiringMaterials" :key="item.id" style="margin-bottom: 12px">
+          <div :class="['expiry-card', getExpiryClass(item.expiryDate)]">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px">{{ item.name }}</div>
+            <div style="font-size: 12px; color: #909399; margin-bottom: 4px">
+              {{ categoryName(item.category) }} | {{ item.specification }}
+            </div>
+            <div style="font-size: 12px; margin-bottom: 4px">
+              有效期: {{ item.expiryDate }}
+            </div>
+            <div :style="{ fontSize: '13px', fontWeight: 600, color: getExpiryColor(item.expiryDate) }">
+              {{ getExpiryText(item.expiryDate) }}
+            </div>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 图表区域 -->
+    <el-row :gutter="16">
+      <el-col :span="12">
+        <div class="card-container">
+          <h4 style="margin-bottom: 12px; color: #303133">物料分类统计</h4>
+          <div id="categoryChart" style="height: 300px"></div>
+        </div>
+      </el-col>
+      <el-col :span="12">
+        <div class="card-container">
+          <h4 style="margin-bottom: 12px; color: #303133">系统信息</h4>
+          <div style="padding: 20px">
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="当前时间">{{ currentTime }}</el-descriptions-item>
+              <el-descriptions-item label="当前用户">{{ user.nickName }}</el-descriptions-item>
+              <el-descriptions-item label="用户角色">{{ roleName }}</el-descriptions-item>
+              <el-descriptions-item label="工号">{{ user.employeeId || '-' }}</el-descriptions-item>
+            </el-descriptions>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script>
-import * as echarts from 'echarts'
-import {ElMessage} from "element-plus";
-import request from "../utils/request";
+import * as echarts from "echarts";
+import request from "@/utils/request";
 import router from "@/router";
 
 export default {
+  name: "Dashboard",
   data() {
     return {
-      cards: [
-        { title: '已借阅', data: 100, icon: '#iconlend-record-pro' },
-        { title: '总访问', data: 100, icon: '#iconvisit'   },
-        { title: '图书数', data: 100, icon: '#iconbook-pro' },
-        { title: '用户数', data: 1000, icon: '#iconpopulation' }
+      user: {},
+      currentTime: "",
+      statCards: [
+        { label: "物料总数", value: 0, color: "#409EFF" },
+        { label: "员工数", value: 0, color: "#67C23A" },
+        { label: "待审批", value: 0, color: "#E6A23C" },
+        { label: "总工单", value: 0, color: "#909399" },
+        { label: "库存预警", value: 0, color: "#F56C6C" },
+        { label: "即将过期", value: 0, color: "#E6A23C" },
       ],
-      data:{}
-    }
+      expiringMaterials: [],
+      categoryCounts: [0, 0, 0, 0],
+    };
+  },
+  computed: {
+    roleName() {
+      const map = { 1: "系统管理员", 2: "仓库管理员", 3: "员工" };
+      return map[this.user.role] || "";
+    },
   },
   created() {
-    let userJson = sessionStorage.getItem("user")
-    if(!userJson)
-    {
-      router.push("/login")
+    let userJson = sessionStorage.getItem("user");
+    if (!userJson) {
+      router.push("/login");
+      return;
     }
+    this.user = JSON.parse(userJson);
   },
   mounted() {
-    this.circleTimer()
-
-    request.get("/dashboard").then(res=>{
-      if(res.code == 0)
-      {
-
-        this.cards[0].data = res.data.lendRecordCount
-        this.cards[1].data = res.data.visitCount
-        this.cards[2].data = res.data.bookCount
-        this.cards[3].data = res.data.userCount
-
-      }
-      else
-      {
-        ElMessage.error(res.msg)
-      }
-
-
-      // 基于准备好的dom，初始化echarts实例
-      var myChart = echarts.init(document.getElementById('main'))
-    console.log(this.cards[0].data)
-      // 绘制图表
-      myChart.setOption({
-        title: {
-          text: '统计'
-        },
-        tooltip: {
-          trigger: 'axis'
-          // axisPointer: {
-          //   type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
-          // }
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          data: this.cards.map(item => item.title),
-          axisTick: {
-            alignWithLabel: true
-          }
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            type: 'bar',
-            label: { show: true },
-            barWidth: '25%',
-            data: [
-              {
-                value: this.cards[0].data,
-                itemStyle: { color: '#5470c6' }
-              },
-              {
-                value: this.cards[1].data,
-                itemStyle: { color: '#91cc75' }
-              },
-              {
-                value: this.cards[2].data,
-                itemStyle: { color: '#fac858' }
-              },
-              {
-                value: this.cards[3].data,
-                itemStyle: { color: '#ee6666' }
-              }
-            ]
-          }
-        ]
-      })
-      window.addEventListener('resize', () => {
-        myChart.resize()
-      })
-    })
+    this.startTimer();
+    this.loadDashboard();
+    this.loadExpiringMaterials();
   },
   methods: {
-    circleTimer() {
-      this.getTimer()
-      setInterval(() => {
-        this.getTimer()
-      }, 1000)
+    startTimer() {
+      this.updateTime();
+      setInterval(() => this.updateTime(), 1000);
     },
-    getTimer() {
-      var d = new Date()
-      var t = d.toLocaleString()
-      document.getElementById('myTimer').innerHTML = t
-    }
-  }
-}
+    updateTime() {
+      this.currentTime = new Date().toLocaleString();
+    },
+    loadDashboard() {
+      request.get("/dashboard").then((res) => {
+        if (res.code === "0") {
+          const d = res.data;
+          this.statCards[0].value = d.materialCount || 0;
+          this.statCards[1].value = d.employeeCount || 0;
+          this.statCards[2].value = d.pendingCount || 0;
+          this.statCards[3].value = d.totalOrderCount || 0;
+          this.statCards[4].value = d.lowStockCount || 0;
+          this.statCards[5].value = d.expiringCount || 0;
+          this.categoryCounts = d.categoryCounts || [0, 0, 0, 0];
+          this.$nextTick(() => this.initChart());
+        }
+      });
+    },
+    loadExpiringMaterials() {
+      request.get("/dashboard/expiring-materials").then((res) => {
+        if (res.code === "0") {
+          this.expiringMaterials = res.data || [];
+        }
+      });
+    },
+    initChart() {
+      const el = document.getElementById("categoryChart");
+      if (!el) return;
+      const chart = echarts.init(el);
+      chart.setOption({
+        tooltip: { trigger: "axis" },
+        xAxis: {
+          type: "category",
+          data: ["标件", "金工件", "元器件", "物资"],
+          axisTick: { alignWithLabel: true },
+        },
+        yAxis: { type: "value" },
+        series: [
+          {
+            type: "bar",
+            barWidth: "40%",
+            data: [
+              { value: this.categoryCounts[0], itemStyle: { color: "#409EFF" } },
+              { value: this.categoryCounts[1], itemStyle: { color: "#E6A23C" } },
+              { value: this.categoryCounts[2], itemStyle: { color: "#67C23A" } },
+              { value: this.categoryCounts[3], itemStyle: { color: "#909399" } },
+            ],
+            label: { show: true, position: "top" },
+          },
+        ],
+        grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+      });
+      window.addEventListener("resize", () => chart.resize());
+    },
+    categoryName(c) {
+      return ["标件", "金工件", "元器件", "物资"][c] || "未知";
+    },
+    getExpiryClass(dateStr) {
+      if (!dateStr) return "";
+      const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
+      if (diff < 0) return "expired";
+      if (diff <= 7) return "warning-7";
+      return "warning-30";
+    },
+    getExpiryColor(dateStr) {
+      if (!dateStr) return "";
+      const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
+      if (diff < 0) return "#F56C6C";
+      if (diff <= 7) return "#E6A23C";
+      return "#F0C78A";
+    },
+    getExpiryText(dateStr) {
+      if (!dateStr) return "";
+      const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+      if (diff < 0) return "已过期 " + Math.abs(diff) + " 天";
+      if (diff === 0) return "今日到期";
+      return "剩余 " + diff + " 天";
+    },
+  },
+};
 </script>
-
-<style scoped>
-.box-card {
-   width: 80%;
-  margin-bottom: 25px;
-  margin-left: 10px;
-}
-
-.clearfix {
-  text-align: center;
-  font-size: 15px;
-}
-
-.text {
-  text-align: center;
-  font-size: 24px;
-  font-weight: 700;
-  vertical-align: super;
-}
-
-#main {
-  width: 100%;
-  height: 450px;
-  margin-top: 20px;
-}
-
-.icon {
-  width: 50px;
-  height: 50px;
-  padding-top: 5px;
-  padding-right: 10px;
-}
-</style>
