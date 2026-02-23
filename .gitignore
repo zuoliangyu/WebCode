@@ -1,35 +1,51 @@
-# basic  
+# === Java / SpringBoot ===
 *.class
 *.log
-target/
-.classpath
-.project
-.settings
-
-# idea
-node_modules/
-*.iml
-.idea/
-*.ipr
-*.iws
-
-# Generated files
-bin/
-gen/
-
-# Package Files #
 *.jar
 *.war
 *.nar
 *.ear
+target/
+
+# === Maven ===
+.mvn/
+mvnw
+mvnw.cmd
+
+# === IDE ===
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+*.ctxt
+.vscode/
+
+# === Node / Vue ===
+node_modules/
+vue/dist/
+
+# === OS ===
+Thumbs.db
+Desktop.ini
+
+# === Package archives ===
 *.zip
 *.tar.gz
 *.rar
 
-# BlueJ files
-*.ctxt
+# === Generated ===
+bin/
+gen/
 
-# Mobile Tools for Java (J2ME)
+# === Temp ===
 .mtj.tmp/
-src/main/java/com/example/demo/utils/SmsUtils.java
-/SpringBoot/src/main/java/com/example/demo/utils/SmsUtils.java
+
+# === Project-specific ignores ===
+SpringBoot/src/main/java/com/example/demo/utils/SmsUtils.java
+
+# === AI / Tool config ===
+.claude/
+.spec-workflow/

@@ -1,118 +1,122 @@
-# 图书馆管理系统 大学课设(library-system)
+# 总成车间物料管理系统
 
-一个基于 SpringBoot、Mybatis-Plus、MySQL、Vue3、ElementPlus、Redis 和 Docker容器 构建的完整图书馆管理系统。
+基于 SpringBoot + Vue 3 + MySQL 的装配车间物料管理系统，支持物料台账管理、出库/退库工单流转、多角色权限控制。
 
-## ✨ 技术栈
+## 技术栈
 
-*   **后端:**
-    *   SpringBoot
-    *   Mybatis-Plus
-    *   MySQL
-*   **前端:**
-    *   Vue3
-    *   ElementPlus
+| 层次 | 技术 |
+|------|------|
+| 后端 | SpringBoot 2.6、MyBatis-Plus 3.5、MySQL 8.0、Redis、JWT |
+| 前端 | Vue 3、Vue Router 4、Element Plus、ECharts、Axios |
+| 部署 | Docker Compose（MySQL + Redis + SpringBoot + Nginx） |
 
-## 🎯 主要功能
+## 角色与权限
 
-### 管理员模块
+| 角色 | role 值 | 可用功能 |
+|------|---------|----------|
+| 系统管理员 | 1 | 数据概览、物料管理、工单审批、用户管理（含 xlsx 批量导入）、个人设置 |
+| 仓库管理员 | 2 | 数据概览、物料管理、工单审批、个人设置 |
+| 员工 | 3 | 数据概览、出库申请、退库申请、我的工单、个人设置 |
 
-*   **用户管理:**
-    *   注册、登录
-    *   修改个人信息
-    *   手机号绑定
-    *   修改或找回密码（手机号验证码）
-*   **书籍管理:**
-    *   书籍信息维护（增删改查）
-*   **读者管理:**
-    *   读者信息维护（增删改查）
-*   **借阅管理:**
-    *   借阅记录管理（查询、审核）
-    *   借阅者权限管理
-    *   借阅状态管理
+## 核心功能
 
-### 读者模块
+- **物料管理** — 增删改查、分类筛选（标件/金工件/元器件/物资）、库存预警、有效期预警
+- **出库申请** — 选择物料 → 输入图号 → 选套数 → 自动计算数量（单套用量 x 套数）→ 提交
+- **退库申请** — 选择已通过的出库工单 → 输入退库数量 → 填写退库去向 → 提交
+- **工单审批** — 通过（自动扣/加库存）或拒绝（填写理由）
+- **我的工单** — 员工查看自己所有工单及审批状态
+- **用户管理** — 用户增删改查、角色分配、xlsx 批量导入、账号禁用/启用、密码重置
+- **数据概览** — 统计卡片、有效期预警、分类柱状图
+- **通用** — 注册/登录（图形验证码）、个人信息编辑、修改密码、忘记密码重置
 
-*   **用户管理:**
-    *   注册、登录
-    *   修改个人信息
-    *   手机号绑定
-    *   修改或找回密码（手机号验证码）
-*   **图书管理:**
-    *   查询图书信息
-    *   借阅和归还图书
-*   **个人中心:**
-    *   查看个人借阅记录
-
-## 📁 代码结构
-
-### 前端 (library-ui)
+## 项目结构
 
 ```
-library-ui
-├── api          // API 接口定义
-├── assets       // 静态资源文件
-│   ├── icon     // 图标
-│   ├── img      // 图片
-│   └── styles   // 样式文件
-├── components   // 自定义 Vue 组件
-├── layout       // 页面布局组件
-├── router       // Vue 路由配置
-├── utils        // 工具函数
-└── views        // 页面视图组件
+WebCode/
+├── SpringBoot/                  # 后端
+│   └── src/main/java/com/example/demo/
+│       ├── controller/
+│       │   ├── MaterialController.java    # 物料管理接口
+│       │   ├── WorkOrderController.java   # 工单接口
+│       │   ├── UserController.java        # 用户接口（含 xlsx 导入）
+│       │   ├── DashboardController.java   # 数据统计接口
+│       │   └── ForgetController.java      # 密码重置接口
+│       ├── entity/
+│       │   ├── Material.java     # 物料实体
+│       │   ├── WorkOrder.java    # 工单实体
+│       │   └── User.java         # 用户实体
+│       ├── mapper/               # MyBatis-Plus Mapper
+│       ├── service/              # 业务逻辑层
+│       ├── commom/Result.java    # 统一响应封装
+│       └── utils/TokenUtils.java # JWT 工具类
+├── vue/                          # 前端
+│   └── src/
+│       ├── views/
+│       │   ├── Dashboard.vue         # 数据概览
+│       │   ├── Material.vue          # 物料管理
+│       │   ├── OutboundRequest.vue   # 出库申请
+│       │   ├── ReturnRequest.vue     # 退库申请
+│       │   ├── OrderApproval.vue     # 工单审批
+│       │   ├── MyOrders.vue          # 我的工单
+│       │   ├── User.vue              # 用户管理
+│       │   ├── Person.vue            # 个人信息
+│       │   ├── Password.vue          # 修改密码
+│       │   ├── Login.vue             # 登录
+│       │   ├── Register.vue          # 注册
+│       │   └── Forget.vue            # 密码重置
+│       ├── components/               # 公共组件
+│       ├── layout/Layout.vue         # 页面布局
+│       ├── router/index.js           # 路由配置
+│       └── utils/request.js          # Axios 封装
+├── docker/                       # Docker 配置
+│   ├── nginx.conf                # Nginx 反向代理配置
+│   └── init.sql                  # 数据库初始化
+├── docker-compose.yml            # Docker Compose 编排
+└── springboot-vue.sql            # 数据库建表与初始数据
 ```
 
-### 后端 (library-serve)
+## 数据库表
 
+| 表名 | 说明 |
+|------|------|
+| user | 用户表（用户名、姓名、工号、角色、账号状态等） |
+| material | 物料表（名称、分类、库存、有效期、图号、规格、单位等） |
+| work_order | 工单表（出库/退库类型、审批状态、关联工单号等） |
+| operation_log | 操作日志表 |
+
+## 启动说明
+
+### Docker 部署（推荐）
+
+```bash
+docker compose up -d --build
+
+# 前端: http://localhost:9876
+# 后端 API: http://localhost:9090
 ```
-library-serve
-└── java
-    └── com
-        └── admin
-            └── library
-                ├── common       // 通用类
-                │   ├── base     // 基础类
-                │   └── config   // 配置类
-                ├── controller   // 控制层
-                ├── domain       // 实体类
-                ├── mapper       // 持久层
-                └── service      // 业务层
-└── resources   // Maven 资源配置
+
+### 本地开发
+
+**后端：**
+
+1. 启动 MySQL，执行 `springboot-vue.sql` 初始化数据库
+2. 启动 Redis
+3. 修改 `SpringBoot/src/main/resources/application.properties` 中的数据库和 Redis 连接
+4. 运行 SpringBoot 启动类
+
+**前端：**
+
+```bash
+cd vue
+npm install --legacy-peer-deps
+npm run serve     # 开发模式，默认 http://localhost:8080
+npm run build     # 生产构建，输出到 dist/
 ```
 
-## 🚀 启动说明
+## 测试账号
 
-### 前端
-
-1.  进入 `library-ui` 目录。
-2.  安装依赖：`npm install`
-3.  启动项目：`npm run serve`
-4.  打包项目：`npm run build` (生成 `dist` 目录用于部署)
-
-### 后端
-
-1.  **数据库:**
-    *   运行根目录下的 SQL 文件创建数据库和表。
-    *   确保数据库连接配置正确。
-2.  **Redis:**
-    *   启动本地 Redis 服务（用于短信验证码功能，可使用 Windows Redis 应用或 Docker 部署）。
-3.  **短信服务 (可选):**
-    *   添加阿里云短信服务 Key 和 pwd。
-    *   **注意：** 如果不使用短信服务，请注释相关代码，否则可能会报错。
-    *   查看 Issues 了解更多：[短信服务相关问题](https://github.com/wzunjh/Library-Management-System/issues/1)
-4.  **启动后端:**
-    *   运行 SpringBoot 启动类。
-5. **问题排查：**
-    * 如果报错显示阿里云短信请求不存在（或者你不想使用该功能），请查看 Issues 中的解决方案：[点击这里](https://github.com/wzunjh/Library-Management-System/issues/1)
-
-## 🖼️ 部分页面展示
-
-|  |  |  |
-|---|---|---|
-| <img src="vue/public/图片3.png" alt="管理员登录">  | <img src="vue/public/图片6.png" alt="管理员主页">   | <img src="vue/public/图片.png" alt="图书列表"> |
-| <img src="vue/public/图片1.png" alt="读者登录"> | <img src="vue/public/图片2.png" alt="读者主页">  | <img src="vue/public/图片8.png" alt="个人借阅">  |
-
-![lendrecord_edit](https://github.com/user-attachments/assets/e00f0599-4b22-4e3d-bf33-165546bdb63d)
-
-<img src="vue/public/图片9.png" alt="个人信息">
-
-
+| 用户名 | 密码 | 角色 |
+|--------|------|------|
+| admin | 123456 | 系统管理员 |
+| warehouse | 123456 | 仓库管理员 |
+| worker | 123456 | 员工 |
