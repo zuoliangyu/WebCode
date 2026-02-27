@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="card-container" style="max-width: 500px; margin: 40px auto">
-      <h3 style="margin-bottom: 20px; color: #303133">修改密码</h3>
+      <h3 class="section-title">修改密码</h3>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="旧密码" prop="oldPassword">
           <el-input v-model="form.oldPassword" type="password" show-password placeholder="请输入当前密码" />
@@ -89,3 +89,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.section-title {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+</style>

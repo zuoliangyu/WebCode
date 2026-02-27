@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="card-container" style="max-width: 600px; margin: 20px auto">
-      <h3 style="margin-bottom: 20px; color: #303133">个人信息</h3>
+      <h3 class="section-title">个人信息</h3>
       <el-form :model="form" ref="form" label-width="80px">
         <el-form-item label="用户名">
           <el-input v-model="form.username" disabled></el-input>
@@ -77,3 +77,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.section-title {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+</style>

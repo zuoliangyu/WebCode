@@ -5,7 +5,7 @@
       <span class="header-title">总成车间物料管理系统</span>
     </div>
     <div class="header-right">
-      <el-tag :type="roleTagType" size="small" style="margin-right: 12px">{{ roleName }}</el-tag>
+      <el-tag :type="roleTagType" size="small" class="role-tag">{{ roleName }}</el-tag>
       <el-dropdown>
         <span class="el-dropdown-link">
           {{ user.nickName || user.username }}
@@ -62,11 +62,15 @@ export default {
 .header-container {
   height: 50px;
   line-height: 50px;
-  background: #fff;
-  border-bottom: 1px solid #EBEEF5;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
+  position: relative;
+  z-index: 10;
 }
 
 .header-left {
@@ -77,13 +81,18 @@ export default {
 .header-logo {
   width: 32px;
   height: 32px;
-  margin-right: 10px;
+  margin-right: 12px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .header-title {
-  font-weight: bold;
-  font-size: 16px;
-  color: #409EFF;
+  font-weight: 700;
+  font-size: 17px;
+  background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
 }
 
 .header-right {
@@ -91,9 +100,23 @@ export default {
   align-items: center;
 }
 
+.role-tag {
+  margin-right: 12px;
+}
+
 .el-dropdown-link {
   cursor: pointer;
-  color: #606266;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.el-dropdown-link:hover {
+  color: #fff;
+}
+
+:deep(.el-icon--right) {
+  color: rgba(255, 255, 255, 0.7);
 }
 </style>

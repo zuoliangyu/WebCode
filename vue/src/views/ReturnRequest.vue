@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="card-container">
-      <h3 style="margin-bottom: 20px; color: #303133">退库申请</h3>
+      <h3 class="section-title">退库申请</h3>
       <el-form :model="form" label-width="100px" style="max-width: 600px">
         <el-form-item label="原出库工单" required>
           <el-select v-model="form.relatedOrderNumber" filterable placeholder="请选择已通过的出库工单" style="width: 100%" @change="onOrderChange">
@@ -15,17 +15,19 @@
         </el-form-item>
 
         <el-form-item label="原工单信息" v-if="selectedOrder">
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="物料名称">{{ selectedOrder.productName }}</el-descriptions-item>
-            <el-descriptions-item label="出库数量">{{ selectedOrder.actualDeliveryQuantity || selectedOrder.quantity }}</el-descriptions-item>
-            <el-descriptions-item label="图号">{{ selectedOrder.drawingNumber }}</el-descriptions-item>
-            <el-descriptions-item label="创建时间">{{ selectedOrder.createTime }}</el-descriptions-item>
-          </el-descriptions>
+          <div class="order-info-card">
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="物料名称">{{ selectedOrder.productName }}</el-descriptions-item>
+              <el-descriptions-item label="出库数量">{{ selectedOrder.actualDeliveryQuantity || selectedOrder.quantity }}</el-descriptions-item>
+              <el-descriptions-item label="图号">{{ selectedOrder.drawingNumber }}</el-descriptions-item>
+              <el-descriptions-item label="创建时间">{{ selectedOrder.createTime }}</el-descriptions-item>
+            </el-descriptions>
+          </div>
         </el-form-item>
 
         <el-form-item label="退库数量" required>
           <el-input-number v-model="form.quantity" :min="1" :max="maxReturnQty" />
-          <span style="color: #909399; margin-left: 10px; font-size: 12px" v-if="selectedOrder">
+          <span style="color: #94a3b8; margin-left: 10px; font-size: 12px" v-if="selectedOrder">
             最大可退: {{ maxReturnQty }}
           </span>
         </el-form-item>
@@ -126,3 +128,19 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.section-title {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.order-info-card {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+</style>

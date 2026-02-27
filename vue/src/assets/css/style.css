@@ -11,10 +11,11 @@ body {
 .el-table__header-wrapper th,
 .el-table__fixed-header-wrapper th {
   word-break: break-word;
-  background-color: #f8f8f9;
-  color: #515a6e;
-  height: 40px;
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  color: #1e293b;
+  height: 44px;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .el-pagination {
@@ -27,7 +28,7 @@ body {
 /* fade-transform */
 .fade-transform-leave-active,
 .fade-transform-enter-active {
-  transition: all 0.5s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-transform-enter {
@@ -43,7 +44,7 @@ body {
 /* breadcrumb transition */
 .breadcrumb-enter-active,
 .breadcrumb-leave-active {
-  transition: all 0.5s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .breadcrumb-enter,
@@ -53,9 +54,33 @@ body {
 }
 
 .breadcrumb-move {
-  transition: all 0.5s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .breadcrumb-leave-active {
   position: absolute;
+}
+
+/* 行状态色 - 半透明版本 */
+.el-table .expired-row { background-color: rgba(239, 68, 68, 0.08) !important; }
+.el-table .warning-row { background-color: rgba(245, 158, 11, 0.08) !important; }
+.el-table .caution-row { background-color: rgba(251, 191, 36, 0.06) !important; }
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
 }

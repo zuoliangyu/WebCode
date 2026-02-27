@@ -81,35 +81,83 @@ export default {
 .aside-container {
   width: 200px;
   min-height: calc(100vh - 50px);
-  background: #fff;
-  border-right: 1px solid #EBEEF5;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .aside-menu {
   border-right: none;
-  background-color: #fff;
+  background-color: transparent !important;
 }
 
 .aside-menu .el-menu-item {
-  color: #606266;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
+  font-weight: 500;
+  margin: 4px 8px;
+  border-radius: 10px;
+  height: 44px;
+  line-height: 44px;
+  transition: all 0.3s ease;
+}
+
+.aside-menu .el-menu-item .el-icon {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+  transition: all 0.3s ease;
 }
 
 .aside-menu .el-menu-item:hover {
-  background-color: #ECF5FF;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff;
+}
+
+.aside-menu .el-menu-item:hover .el-icon {
+  color: #fff;
 }
 
 .aside-menu .el-menu-item.is-active {
-  color: #409EFF;
-  background-color: #ECF5FF;
-  border-left: 3px solid #409EFF;
+  color: #fff !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.6) 0%, rgba(139, 92, 246, 0.6) 100%) !important;
+  border-left: none;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.aside-menu .el-menu-item.is-active .el-icon {
+  color: #fff;
 }
 
 :deep(.el-sub-menu__title) {
-  color: #606266;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+  margin: 4px 8px;
+  border-radius: 10px;
+  height: 44px !important;
+  line-height: 44px !important;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-sub-menu__title .el-icon) {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
 }
 
 :deep(.el-sub-menu__title:hover) {
-  background-color: #ECF5FF;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+:deep(.el-sub-menu__title:hover .el-icon) {
+  color: #fff;
+}
+
+:deep(.el-sub-menu .el-menu) {
+  background: transparent !important;
+}
+
+:deep(.el-sub-menu__icon-arrow) {
+  color: rgba(255, 255, 255, 0.5);
 }
 </style>

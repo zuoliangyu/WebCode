@@ -52,7 +52,7 @@
         <el-table-column prop="manufacturer" label="厂家" width="100" />
         <el-table-column prop="totalQuantity" label="库存" width="70">
           <template #default="scope">
-            <span :style="{ color: scope.row.totalQuantity <= scope.row.stockAlertThreshold ? '#F56C6C' : '' }">
+            <span :style="{ color: scope.row.totalQuantity <= scope.row.stockAlertThreshold ? '#ef4444' : '', fontWeight: scope.row.totalQuantity <= scope.row.stockAlertThreshold ? '600' : '' }">
               {{ scope.row.totalQuantity }}
             </span>
           </template>
@@ -62,7 +62,7 @@
         <el-table-column prop="storageLocation" label="存放位置" width="90" />
         <el-table-column prop="expiryDate" label="有效期" width="100">
           <template #default="scope">
-            <span :style="{ color: isExpiringSoon(scope.row.expiryDate) ? '#F56C6C' : '' }">
+            <span :style="{ color: isExpiringSoon(scope.row.expiryDate) ? '#ef4444' : '' }">
               {{ scope.row.expiryDate }}
             </span>
           </template>
@@ -299,9 +299,3 @@ export default {
   },
 };
 </script>
-
-<style>
-.el-table .expired-row { background-color: #FEF0F0 !important; }
-.el-table .warning-row { background-color: #FDF6EC !important; }
-.el-table .caution-row { background-color: #FEFCE8 !important; }
-</style>

@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="card-container">
-      <h3 style="margin-bottom: 20px; color: #303133">出库申请</h3>
+      <h3 class="section-title">出库申请</h3>
       <el-form :model="form" label-width="100px" style="max-width: 600px">
         <el-form-item label="选择物料" required>
           <el-select v-model="form.productId" filterable placeholder="请搜索选择物料" style="width: 100%" @change="onMaterialChange">
@@ -15,12 +15,14 @@
         </el-form-item>
 
         <el-form-item label="物料信息" v-if="selectedMaterial">
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="库存">{{ selectedMaterial.totalQuantity }} {{ selectedMaterial.unit }}</el-descriptions-item>
-            <el-descriptions-item label="单套用量">{{ selectedMaterial.perSetQuantity }} {{ selectedMaterial.unit }}</el-descriptions-item>
-            <el-descriptions-item label="分类">{{ categoryName(selectedMaterial.category) }}</el-descriptions-item>
-            <el-descriptions-item label="存放位置">{{ selectedMaterial.storageLocation }}</el-descriptions-item>
-          </el-descriptions>
+          <div class="material-info-card">
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="库存">{{ selectedMaterial.totalQuantity }} {{ selectedMaterial.unit }}</el-descriptions-item>
+              <el-descriptions-item label="单套用量">{{ selectedMaterial.perSetQuantity }} {{ selectedMaterial.unit }}</el-descriptions-item>
+              <el-descriptions-item label="分类">{{ categoryName(selectedMaterial.category) }}</el-descriptions-item>
+              <el-descriptions-item label="存放位置">{{ selectedMaterial.storageLocation }}</el-descriptions-item>
+            </el-descriptions>
+          </div>
         </el-form-item>
 
         <el-form-item label="图号" required>
@@ -35,7 +37,7 @@
           <el-tag type="info" size="large">
             {{ computedQuantity }} {{ selectedMaterial ? selectedMaterial.unit : '个' }}
           </el-tag>
-          <span style="color: #909399; margin-left: 10px; font-size: 12px">
+          <span style="color: #94a3b8; margin-left: 10px; font-size: 12px">
             = 套数({{ form.numberOfSets }}) × 单套用量({{ selectedMaterial ? selectedMaterial.perSetQuantity : 0 }})
           </span>
         </el-form-item>
@@ -127,3 +129,19 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.section-title {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.material-info-card {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+</style>

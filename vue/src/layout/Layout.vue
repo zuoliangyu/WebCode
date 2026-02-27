@@ -1,9 +1,9 @@
 <template>
-  <div>
+  <div class="layout-wrapper">
     <Header />
     <div style="display: flex">
       <Aside />
-      <div style="flex: 1; background-color: #F5F7FA; min-height: calc(100vh - 50px); overflow-y: auto">
+      <div class="main-content">
         <router-view />
       </div>
     </div>
@@ -22,3 +22,18 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.layout-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
+}
+
+.main-content {
+  flex: 1;
+  min-height: calc(100vh - 50px);
+  overflow-y: auto;
+  background: transparent;
+}
+</style>

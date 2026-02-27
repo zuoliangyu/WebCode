@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="card-container">
-      <el-form :inline="true" size="small">
+      <el-form :inline="true" size="small" class="filter-form">
         <el-form-item label="状态">
           <el-select v-model="filterStatus" placeholder="全部" clearable>
             <el-option label="待审批" value="待审批" />
