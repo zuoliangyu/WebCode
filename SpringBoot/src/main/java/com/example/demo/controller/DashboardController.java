@@ -12,6 +12,8 @@ import com.example.demo.mapper.UserMapper;
 import com.example.demo.mapper.WorkOrderMapper;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.demo.utils.TokenUtils;
+
 import javax.annotation.Resource;
 import java.util.*;
 
@@ -76,6 +78,31 @@ public class DashboardController {
             }
         }
         map.put("categoryCounts", categoryCount);
+
+        return Result.success(map);
+    }
+
+    // 获取员工个人仪表盘数据
+    @GetMapping("/my")
+    public Result<?> myDashboardData() {
+        User currentUser = TokenUtils.getUser();
+        if (currentUser == null) {
+            return Result.error("-1", "未登录");
+        }
+        Map<String, Object> map = new HashMap<>();
+
+        // 我的待审批工单数
+        LambdaQueryWrapper<WorkOrder> myPendingWrapper = Wrappers.lambdaQuery();
+        myPendingWrapper.eq(WorkOrder::getApplicantId, currentUser.getId())
+                .eq(WorkOrder::getStatus, "待审批");
+        long myPendingCount = workOrderMapper.selectCount(myPendingWrapper);
+        map.put("myPendingCount", myPendingCount);
+
+        // 我的工单总数
+        LambdaQueryWrapper<WorkOrder> myTotalWrapper = Wrappers.lambdaQuery();
+        myTotalWrapper.eq(WorkOrder::getApplicantId, currentUser.getId());
+        long myTotalCount = workOrderMapper.selectCount(myTotalWrapper);
+        map.put("myTotalCount", myTotalCount);
 
         return Result.success(map);
     }

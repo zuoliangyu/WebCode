@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
-    <!-- 统计卡片 -->
-    <el-row :gutter="16" style="margin-bottom: 20px">
+    <!-- 管理员/仓库管理员：完整统计卡片 -->
+    <el-row :gutter="16" style="margin-bottom: 20px" v-if="user.role !== 3">
       <el-col :span="4" v-for="(item, index) in statCards" :key="index">
         <div class="stat-card">
           <div class="stat-number" :style="{ color: item.color }">{{ item.value }}</div>
@@ -10,8 +10,18 @@
       </el-col>
     </el-row>
 
-    <!-- 有效期预警区域 -->
-    <div class="card-container" v-if="expiringMaterials.length > 0">
+    <!-- 员工：个人统计卡片 -->
+    <el-row :gutter="16" style="margin-bottom: 20px" v-if="user.role === 3">
+      <el-col :span="6" v-for="(item, index) in myStatCards" :key="index">
+        <div class="stat-card">
+          <div class="stat-number" :style="{ color: item.color }">{{ item.value }}</div>
+          <div class="stat-label">{{ item.label }}</div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 有效期预警区域（仅管理员/仓库管理员可见） -->
+    <div class="card-container" v-if="user.role !== 3 && expiringMaterials.length > 0">
       <h4 style="margin-bottom: 16px; color: #303133">
         <el-icon style="color: #E6A23C; vertical-align: middle"><WarningFilled /></el-icon>
         有效期预警
@@ -34,8 +44,8 @@
       </el-row>
     </div>
 
-    <!-- 图表区域 -->
-    <el-row :gutter="16">
+    <!-- 图表区域（仅管理员/仓库管理员可见） -->
+    <el-row :gutter="16" v-if="user.role !== 3">
       <el-col :span="12">
         <div class="card-container">
           <h4 style="margin-bottom: 12px; color: #303133">物料分类统计</h4>
@@ -43,6 +53,23 @@
         </div>
       </el-col>
       <el-col :span="12">
+        <div class="card-container">
+          <h4 style="margin-bottom: 12px; color: #303133">系统信息</h4>
+          <div style="padding: 20px">
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="当前时间">{{ currentTime }}</el-descriptions-item>
+              <el-descriptions-item label="当前用户">{{ user.nickName }}</el-descriptions-item>
+              <el-descriptions-item label="用户角色">{{ roleName }}</el-descriptions-item>
+              <el-descriptions-item label="工号">{{ user.employeeId || '-' }}</el-descriptions-item>
+            </el-descriptions>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 员工的系统信息（全宽显示） -->
+    <el-row :gutter="16" v-if="user.role === 3">
+      <el-col :span="24">
         <div class="card-container">
           <h4 style="margin-bottom: 12px; color: #303133">系统信息</h4>
           <div style="padding: 20px">
@@ -78,6 +105,10 @@ export default {
         { label: "库存预警", value: 0, color: "#F56C6C" },
         { label: "即将过期", value: 0, color: "#E6A23C" },
       ],
+      myStatCards: [
+        { label: "我的待审批", value: 0, color: "#E6A23C" },
+        { label: "我的工单", value: 0, color: "#409EFF" },
+      ],
       expiringMaterials: [],
       categoryCounts: [0, 0, 0, 0],
     };
@@ -98,8 +129,12 @@ export default {
   },
   mounted() {
     this.startTimer();
-    this.loadDashboard();
-    this.loadExpiringMaterials();
+    if (this.user.role === 3) {
+      this.loadMyDashboard();
+    } else {
+      this.loadDashboard();
+      this.loadExpiringMaterials();
+    }
   },
   methods: {
     startTimer() {
@@ -121,6 +156,15 @@ export default {
           this.statCards[5].value = d.expiringCount || 0;
           this.categoryCounts = d.categoryCounts || [0, 0, 0, 0];
           this.$nextTick(() => this.initChart());
+        }
+      });
+    },
+    loadMyDashboard() {
+      request.get("/dashboard/my").then((res) => {
+        if (res.code === "0") {
+          const d = res.data;
+          this.myStatCards[0].value = d.myPendingCount || 0;
+          this.myStatCards[1].value = d.myTotalCount || 0;
         }
       });
     },
