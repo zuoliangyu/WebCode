@@ -49,3 +49,6 @@ SpringBoot/src/main/java/com/example/demo/utils/SmsUtils.java
 # === AI / Tool config ===
 .claude/
 .spec-workflow/
+
+# === Docs ===
+项目汇报文档.md
